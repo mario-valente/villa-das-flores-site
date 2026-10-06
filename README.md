@@ -14,9 +14,9 @@ npm run dev
 - `src/content.js`: textos, links (WhatsApp, Airbnb, Instagram, Maps), descrição da casa e distâncias. Edite aqui para mudar conteúdo.
 - `src/main.jsx`: páginas `/` (casa) e `/trancoso` (vila, mapa, distâncias), roteador mínimo via History API.
 - `src/ProximityDiagram.jsx`: corte esquemático casa, jardim/mangue, praia e mar com a cota de 20 m.
-- `public/_redirects`: fallback de SPA para a rota `/trancoso` no Cloudflare Pages.
+- `wrangler.jsonc`: config do Cloudflare (assets em `dist`, fallback de SPA para a rota `/trancoso`).
 
-## Cloudflare Pages
+## Cloudflare (Workers Assets / Pages)
 
 - Framework preset: `Vite`
 - Build command: `npm run build`
