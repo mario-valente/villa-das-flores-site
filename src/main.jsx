@@ -1,203 +1,375 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import ProximityDiagram from './ProximityDiagram.jsx'
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BedDouble,
-  Camera,
-  Menu,
-  MoveUpRight,
-  Sparkles,
-  Sun,
-  Trees,
-  Utensils,
-  X,
-} from 'lucide-react'
+  AIRBNB_URL, INSTAGRAM_URL, MAPS_EMBED, MAPS_LINK, WHATSAPP_URL,
+  beaches, distances, facts, floors, notes, photos, services,
+} from './content.js'
 import './styles.css'
 
-const photos = {
-  main: 'https://a0.muscache.com/im/pictures/miso/Hosting-34116394/original/0ff887d7-2fef-44d3-b701-00f728e24799.jpeg?im_w=1200',
-  pool: 'https://a0.muscache.com/im/pictures/8cd66eda-b925-4b44-85d8-ea6d6ada1ed7.jpg?im_w=1200',
-  bedroom: 'https://a0.muscache.com/im/pictures/miso/Hosting-34116394/original/42c5ec20-baaf-4a36-aa4e-b82002661272.jpeg?im_w=1200',
-  detail: 'https://a0.muscache.com/im/pictures/miso/Hosting-34116394/original/388fbb17-915b-413e-a195-3e244fb0bc19.jpeg?im_w=1200',
-  garden: 'https://a0.muscache.com/im/pictures/miso/Hosting-34116394/original/5efbd52d-1bf0-4517-8b80-3f88ded3ec43.jpeg?im_w=1200',
+/* ---------- roteador mínimo ---------- */
+
+function usePath() {
+  const [path, setPath] = useState(window.location.pathname)
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+  return path
 }
 
-function Mark() {
+function scrollToHash(hash) {
+  if (!hash) { window.scrollTo({ top: 0 }); return }
+  const el = document.getElementById(hash.slice(1))
+  if (el) el.scrollIntoView({ block: 'start' })
+}
+
+function navigate(to) {
+  const [pathname, hash = ''] = to.split('#')
+  const target = pathname || '/'
+  if (target !== window.location.pathname) {
+    window.history.pushState({}, '', target + (hash ? `#${hash}` : ''))
+    window.dispatchEvent(new PopStateEvent('popstate'))
+    requestAnimationFrame(() => scrollToHash(hash ? `#${hash}` : ''))
+  } else {
+    if (hash) window.history.replaceState({}, '', `#${hash}`)
+    scrollToHash(hash ? `#${hash}` : '')
+  }
+}
+
+function Link({ to, children, onClick, ...rest }) {
+  const handle = (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    navigate(to)
+    onClick?.()
+  }
+  return <a href={to} onClick={handle} {...rest}>{children}</a>
+}
+
+/* ---------- peças compartilhadas ---------- */
+
+function WhatsAppIcon({ size = 18 }) {
   return (
-    <a className="brand" href="#top" aria-label="Villa das Flores - início">
-      <span className="brand-mark"><span>V</span><i>✳</i></span>
-      <span className="brand-copy"><strong>villa das</strong><em>flores</em></span>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  )
+}
+
+function WhatsAppButton({ children = 'Consultar datas pelo WhatsApp', className = '' }) {
+  return (
+    <a className={`button button-primary ${className}`} href={WHATSAPP_URL} target="_blank" rel="noreferrer">
+      <WhatsAppIcon />
+      <span>{children}</span>
     </a>
   )
 }
 
-function IconButton({ children, label, className = '', onClick }) {
-  return <button className={`icon-button ${className}`} aria-label={label} onClick={onClick}>{children}</button>
+function Brand() {
+  return (
+    <Link to="/" className="brand" aria-label="Villa das Flores, página inicial">
+      <span className="brand-name">Villa das Flores</span>
+      <span className="brand-place">Praia dos Nativos, Trancoso</span>
+    </Link>
+  )
 }
 
-function App() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [galleryOpen, setGalleryOpen] = useState(false)
+function Header({ path }) {
+  const [open, setOpen] = useState(false)
+  const close = () => setOpen(false)
+  const onTrancoso = path === '/trancoso'
+  return (
+    <header className={`site-header ${open ? 'is-open' : ''}`}>
+      <div className="shell header-row">
+        <Brand />
+        <nav className="site-nav" aria-label="Principal">
+          <Link to="/#casa" onClick={close}>A casa</Link>
+          <Link to="/#fotos" onClick={close}>Fotos</Link>
+          <Link to="/trancoso" onClick={close} aria-current={onTrancoso ? 'page' : undefined}>Trancoso</Link>
+          <Link to="/#reserva" onClick={close}>Reserva</Link>
+        </nav>
+        <div className="header-actions">
+          <WhatsAppButton className="button-small header-whatsapp">WhatsApp</WhatsAppButton>
+          <button className="menu-toggle" aria-expanded={open} aria-controls="mobile-nav" onClick={() => setOpen(!open)}>
+            <span className="sr-only">{open ? 'Fechar menu' : 'Abrir menu'}</span>
+            <span className="menu-bars" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <nav id="mobile-nav" className="mobile-nav" aria-label="Principal (celular)">
+        <Link to="/#casa" onClick={close}>A casa</Link>
+        <Link to="/#fotos" onClick={close}>Fotos</Link>
+        <Link to="/trancoso" onClick={close}>Trancoso</Link>
+        <Link to="/#reserva" onClick={close}>Reserva</Link>
+        <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">Falar no WhatsApp</a>
+      </nav>
+    </header>
+  )
+}
 
-  const closeMenu = () => setMenuOpen(false)
+function Footer() {
+  return (
+    <footer className="site-footer">
+      <div className="shell footer-grid">
+        <div>
+          <p className="footer-name">Villa das Flores</p>
+          <p className="footer-address">Praia dos Nativos<br />Trancoso, Porto Seguro, Bahia</p>
+        </div>
+        <div className="footer-links">
+          <a href={WHATSAPP_URL} target="_blank" rel="noreferrer">WhatsApp</a>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer">Instagram</a>
+          <a href={AIRBNB_URL} target="_blank" rel="noreferrer">Airbnb</a>
+          <a href={MAPS_LINK} target="_blank" rel="noreferrer">Google Maps</a>
+        </div>
+        <div className="footer-links">
+          <Link to="/#casa">A casa</Link>
+          <Link to="/#fotos">Fotos</Link>
+          <Link to="/trancoso">Trancoso</Link>
+          <Link to="/#reserva">Reserva</Link>
+        </div>
+      </div>
+      <div className="shell footer-bottom">
+        <span>Villa das Flores, {new Date().getFullYear()}</span>
+      </div>
+    </footer>
+  )
+}
+
+function FloatingWhatsApp() {
+  return (
+    <a className="floating-whatsapp" href={WHATSAPP_URL} target="_blank" rel="noreferrer" aria-label="Falar no WhatsApp">
+      <WhatsAppIcon size={26} />
+    </a>
+  )
+}
+
+/* ---------- página inicial ---------- */
+
+function Home() {
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  useEffect(() => {
+    document.title = 'Villa das Flores | Praia dos Nativos, Trancoso'
+  }, [])
+  useEffect(() => {
+    if (!galleryOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') setGalleryOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [galleryOpen])
 
   return (
-    <div id="top">
-      <header className={`site-header ${menuOpen ? 'is-open' : ''}`}>
-        <div className="nav-shell">
-          <Mark />
-          <nav className="desktop-nav" aria-label="Navegação principal">
-            <a href="#casa">A casa</a>
-            <a href="#experiencia">Experiência</a>
-            <a href="#localizacao">Trancoso</a>
-          </nav>
-          <div className="header-actions">
-            <a className="instagram-link" href="https://www.instagram.com/villadasflores/" target="_blank" rel="noreferrer">
-              <Camera size={16} strokeWidth={1.7} />
-              <span>Instagram</span>
-            </a>
-            <a className="nav-cta" href="#reserva">Consultar datas <ArrowUpRight size={15} /></a>
-            <IconButton label="Abrir menu" className="mobile-menu-button" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={21} /> : <Menu size={21} />}
-            </IconButton>
+    <>
+      <section className="hero">
+        <img className="hero-photo" src={photos.pool} alt="Piscina e jardim da Villa das Flores" fetchPriority="high" />
+        <div className="shell hero-copy">
+          <h1>Uma casa de pé na areia na Praia dos Nativos.</h1>
+          <p>Cinco suítes para até 11 hóspedes, piscina, área de lazer com fogão a lenha e um jardim cercado pelo mangue. A praia fica a 20 metros da porta.</p>
+          <div className="hero-actions">
+            <WhatsAppButton />
+            <Link className="button button-ghost" to="/#casa">Ver a casa</Link>
           </div>
         </div>
-        <nav className="mobile-nav" aria-label="Navegação mobile">
-          <a href="#casa" onClick={closeMenu}>A casa <ArrowDownRight size={15} /></a>
-          <a href="#experiencia" onClick={closeMenu}>Experiência <ArrowDownRight size={15} /></a>
-          <a href="#localizacao" onClick={closeMenu}>Trancoso <ArrowDownRight size={15} /></a>
-          <a href="#reserva" onClick={closeMenu}>Consultar datas <ArrowUpRight size={15} /></a>
-        </nav>
-      </header>
+      </section>
 
-      <main>
-        <section className="hero-section">
-          <div className="hero-content page-shell">
-            <p className="eyebrow light-eyebrow"><span /> Hospedagem autoral em Trancoso</p>
-            <h1>Onde o tempo<br /><i>floresce.</i></h1>
-            <p className="hero-description">Uma casa tropical entre o verde e o azul de Trancoso. Feita para desacelerar, respirar e estar.</p>
-            <a className="round-link light-link" href="#casa" aria-label="Conheça a Villa das Flores"><span>Conheça<br />a villa</span><ArrowDownRight size={23} strokeWidth={1.3} /></a>
-          </div>
-          <div className="hero-image-credit">Villa das Flores <span /> Trancoso, Bahia</div>
-          <div className="hero-scroll"><span>Scroll para descobrir</span><div /></div>
-          <div className="hero-index"><span>01</span><i /> <span>04</span></div>
-          <div className="hero-booking-card">
-            <div className="booking-card-head"><span>Uma pausa com endereço</span><span className="pulse-dot" /></div>
-            <strong>Trancoso, <i>BA</i></strong>
-            <div className="booking-card-foot"><span>Casa inteira · Bahia</span><a href="#reserva" aria-label="Consultar disponibilidade"><ArrowUpRight size={19} /></a></div>
-          </div>
-        </section>
+      <section className="facts shell" aria-label="Resumo da casa">
+        <dl>
+          {facts.map((f) => (
+            <div key={f.label}><dt>{f.label}</dt><dd>{f.value}</dd></div>
+          ))}
+        </dl>
+      </section>
 
-        <div className="marquee-strip" aria-label="Villa das Flores em Trancoso">
-          <div className="marquee-track"><span>slow living</span><i>✳</i><span>jardim tropical</span><i>✳</i><span>céu aberto</span><i>✳</i><span>trancoso, bahia</span><i>✳</i><span>slow living</span><i>✳</i><span>jardim tropical</span><i>✳</i></div>
+      <section className="house shell" id="casa">
+        <div className="section-head">
+          <h2>A casa</h2>
+          <p>A Villa das Flores fica na Praia dos Nativos, em Trancoso, a 20 metros do mar. São dois pisos, um anexo de lazer e a área externa com piscina e jardim. Todas as suítes abrem para o avarandado.</p>
         </div>
 
-        <section className="intro-section page-shell" id="casa">
-          <div className="intro-heading">
-            <p className="eyebrow"><span /> A casa</p>
-            <p className="section-number">01 <i>/</i> 03</p>
+        <div className="house-grid">
+          <div className="house-plan">
+            {floors.map((floor) => (
+              <section key={floor.title} className="floor">
+                <h3>{floor.title}</h3>
+                <ul>{floor.items.map((it) => <li key={it}>{it}</li>)}</ul>
+              </section>
+            ))}
           </div>
-          <div className="intro-grid">
-            <div className="intro-copy">
-              <h2>Um pedaço de<br /><i>Trancoso</i> só seu.</h2>
-              <p>Na Villa das Flores, a arquitetura encontra a natureza de um jeito simples e cheio de alma. Uma casa para dividir bons dias, longas conversas e o silêncio gostoso de não ter hora.</p>
-              <a className="text-link" href="#experiencia">Descubra a casa <ArrowUpRight size={16} /></a>
-              <div className="intro-facts"><div><strong>01</strong><span>casa<br />inteira</span></div><div><strong>∞</strong><span>tempo<br />para você</span></div></div>
-            </div>
-            <div className="intro-photo-wrap">
-              <img src={photos.pool} alt="Área externa da Villa das Flores com piscina" />
-              <div className="photo-stamp"><span>TRANCOSO</span><strong>BA</strong><small>16°35' S<br />39°06' W</small></div>
-            </div>
+          <div className="house-photos">
+            <img src={photos.varanda} alt="Avarandado com mesa de jantar" />
+            <img src={photos.suite} alt="Suíte com cama de casal e mosquiteiro" />
+            <img src={photos.suiteSolteiro} alt="Suíte com duas camas de solteiro" />
           </div>
-        </section>
-
-        <section className="feature-section" id="experiencia">
-          <div className="page-shell">
-            <div className="feature-topline">
-              <p className="eyebrow"><span /> A experiência</p>
-              <p className="feature-note">Pequenos luxos,<br /><i>sem pressa.</i></p>
-            </div>
-            <div className="feature-grid">
-              <article className="feature-card feature-image-card">
-                <img src={photos.bedroom} alt="Quarto iluminado da Villa das Flores" />
-                <div className="feature-overlay"><span>01</span><h3>Conforto<br /><i>natural</i></h3></div>
-              </article>
-              <article className="feature-card feature-text-card">
-                <BedDouble size={26} strokeWidth={1.2} />
-                <span className="card-index">02</span>
-                <h3>Feita para<br /><i>ficar.</i></h3>
-                <p>Quartos acolhedores, luz natural e tudo o que você precisa para sentir que chegou em casa.</p>
-              </article>
-              <article className="feature-card feature-tall-card">
-                <img src={photos.garden} alt="Jardim tropical da Villa das Flores" />
-                <div className="feature-overlay"><span>03</span><h3>Verde por<br /><i>todos os lados.</i></h3></div>
-              </article>
-            </div>
-            <div className="amenities-row">
-              <div><Sun size={19} strokeWidth={1.4} /><span>Sol o ano inteiro</span></div>
-              <div><Trees size={19} strokeWidth={1.4} /><span>Jardim tropical</span></div>
-              <div><Utensils size={19} strokeWidth={1.4} /><span>Cozinha equipada</span></div>
-              <div><Sparkles size={19} strokeWidth={1.4} /><span>Casa inteira</span></div>
-            </div>
-          </div>
-        </section>
-
-        <section className="quote-section page-shell">
-          <div className="quote-mark">“</div>
-          <blockquote>Trancoso não é um lugar para conhecer.<br /><i>É um lugar para sentir.</i></blockquote>
-          <div className="quote-rule" />
-          <p>— sobre viver dias na Villa das Flores</p>
-        </section>
-
-        <section className="location-section" id="localizacao">
-          <div className="location-image"><img src={photos.detail} alt="Detalhe da arquitetura tropical em Trancoso" /></div>
-          <div className="location-copy">
-            <p className="eyebrow light-eyebrow"><span /> A localização</p>
-            <h2>Entre o quadrado<br />e o <i>mar.</i></h2>
-            <p>A poucos minutos do Quadrado e das praias mais bonitas da região, a Villa fica no ponto perfeito entre a energia de Trancoso e a tranquilidade de um refúgio particular.</p>
-            <a className="text-link light-text-link" href="https://maps.google.com/?q=Trancoso+Bahia" target="_blank" rel="noreferrer">Ver no mapa <MoveUpRight size={16} /></a>
-          </div>
-        </section>
-
-        <section className="gallery-section page-shell">
-          <div className="gallery-heading">
-            <div><p className="eyebrow"><span /> Um olhar por dentro</p><h2>Casa com<br /><i>alma.</i></h2></div>
-            <button className="text-link button-link" onClick={() => setGalleryOpen(true)}>Ver todas as fotos <ArrowUpRight size={16} /></button>
-          </div>
-          <div className="gallery-grid">
-            <button className="gallery-photo gallery-photo-large" onClick={() => setGalleryOpen(true)}><img src={photos.main} alt="Sala da Villa das Flores" /></button>
-            <button className="gallery-photo" onClick={() => setGalleryOpen(true)}><img src={photos.pool} alt="Piscina e jardim da Villa das Flores" /></button>
-            <button className="gallery-photo" onClick={() => setGalleryOpen(true)}><img src={photos.garden} alt="Área verde da Villa das Flores" /></button>
-          </div>
-        </section>
-
-        <section className="booking-section" id="reserva">
-          <div className="booking-inner page-shell">
-            <div className="booking-copy"><p className="eyebrow light-eyebrow"><span /> Sua próxima pausa</p><h2>Venha viver<br /><i>Trancoso.</i></h2></div>
-            <div className="booking-action"><p>Pronto para trocar a rotina por dias leves, céu estrelado e pés na areia?</p><a className="booking-button" href="https://www.airbnb.com.br/rooms/34116394" target="_blank" rel="noreferrer">Consultar disponibilidade <ArrowUpRight size={18} /></a></div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="site-footer">
-        <div className="page-shell footer-grid">
-          <div><Mark /><p className="footer-tagline">Uma casa para florescer<br />no seu próprio tempo.</p></div>
-          <div className="footer-column"><span>Encontre a gente</span><a href="https://www.instagram.com/villadasflores/" target="_blank" rel="noreferrer">Instagram <MoveUpRight size={13} /></a><a href="https://www.airbnb.com.br/rooms/34116394" target="_blank" rel="noreferrer">Airbnb <MoveUpRight size={13} /></a></div>
-          <div className="footer-column"><span>Fale com a gente</span><a href="https://www.instagram.com/villadasflores/" target="_blank" rel="noreferrer">Mensagem direta <MoveUpRight size={13} /></a><a href="https://www.airbnb.com.br/rooms/34116394" target="_blank" rel="noreferrer">Consultar no Airbnb <MoveUpRight size={13} /></a></div>
-          <div className="footer-column footer-place"><span>Estamos aqui</span><p>Trancoso<br />Bahia, Brasil</p></div>
         </div>
-        <div className="page-shell footer-bottom"><span>© 2024 Villa das Flores</span><span>Feito com calma na Bahia <i>✳</i></span></div>
-      </footer>
+      </section>
 
-      {galleryOpen && <div className="gallery-modal" role="dialog" aria-modal="true" aria-label="Galeria de fotos" onClick={() => setGalleryOpen(false)}>
-        <IconButton label="Fechar galeria" className="modal-close" onClick={() => setGalleryOpen(false)}><X size={22} /></IconButton>
-        <div className="modal-content" onClick={(event) => event.stopPropagation()}>
-          <img src={photos.main} alt="Sala da Villa das Flores" />
-          <div className="modal-side"><img src={photos.pool} alt="Piscina da Villa das Flores" /><img src={photos.bedroom} alt="Quarto da Villa das Flores" /></div>
+      <section className="details">
+        <div className="shell details-grid">
+          <div>
+            <h2>Incluído na diária</h2>
+            <ul className="plain-list">{services.map((s) => <li key={s}>{s}</li>)}</ul>
+          </div>
+          <div>
+            <h2>Bom saber</h2>
+            <ul className="plain-list two-col">{notes.map((n) => <li key={n}>{n}</li>)}</ul>
+          </div>
         </div>
-      </div>}
-    </div>
+      </section>
+
+      <section className="gallery shell" id="fotos">
+        <div className="section-head section-head-row">
+          <h2>Fotos</h2>
+          <button className="text-button" onClick={() => setGalleryOpen(true)}>Ampliar</button>
+        </div>
+        <div className="gallery-grid">
+          <button className="gallery-item large" onClick={() => setGalleryOpen(true)}><img src={photos.pool} alt="Piscina com espreguiçadeiras" /></button>
+          <button className="gallery-item" onClick={() => setGalleryOpen(true)}><img src={photos.suite} alt="Suíte com mosquiteiro" /></button>
+          <button className="gallery-item" onClick={() => setGalleryOpen(true)}><img src={photos.jardimEspreguicadeira} alt="Espreguiçadeira no jardim" /></button>
+          <button className="gallery-item" onClick={() => setGalleryOpen(true)}><img src={photos.varanda} alt="Mesa de jantar no avarandado" /></button>
+          <button className="gallery-item" onClick={() => setGalleryOpen(true)}><img src={photos.suiteSolteiro} alt="Suíte de solteiro" /></button>
+        </div>
+      </section>
+
+      <section className="place shell" id="localizacao">
+        <div className="section-head">
+          <h2>Onde a casa está</h2>
+          <p>Na Praia dos Nativos, abaixo do Quadrado e ao norte da foz do rio Trancoso. Da casa até a areia são 20 metros, por dentro do jardim.</p>
+        </div>
+        <ProximityDiagram compact />
+        <Link className="button button-outline" to="/trancoso">Sobre Trancoso, mapa e distâncias</Link>
+      </section>
+
+      <section className="booking" id="reserva">
+        <div className="shell booking-grid">
+          <div>
+            <h2>Datas e valores</h2>
+            <p>Envie as datas e o número de hóspedes pelo WhatsApp. Respondemos com a disponibilidade e o valor da diária.</p>
+          </div>
+          <div className="booking-actions">
+            <WhatsAppButton className="button-large" />
+            <a className="button button-ghost" href={AIRBNB_URL} target="_blank" rel="noreferrer">Reservar pelo Airbnb</a>
+          </div>
+        </div>
+      </section>
+
+      {galleryOpen && (
+        <div className="lightbox" role="dialog" aria-modal="true" aria-label="Fotos da casa" onClick={() => setGalleryOpen(false)}>
+          <button className="lightbox-close" onClick={() => setGalleryOpen(false)}>Fechar</button>
+          <div className="lightbox-grid" onClick={(e) => e.stopPropagation()}>
+            {Object.entries(photos).map(([key, src]) => <img key={key} src={src} alt="" />)}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+/* ---------- página Trancoso ---------- */
+
+function Trancoso() {
+  useEffect(() => {
+    document.title = 'Trancoso: praias, mapa e distâncias | Villa das Flores'
+  }, [])
+  return (
+    <>
+      <section className="page-intro shell">
+        <h1>Trancoso</h1>
+        <p>Vila do sul da Bahia, no município de Porto Seguro. O centro é o Quadrado: um gramado largo cercado por casas coloridas do século XVI, com a igreja de São João Batista no alto da falésia, de frente para o mar. Abaixo da falésia ficam as praias.</p>
+      </section>
+
+      <section className="shell beach-section">
+        <h2>Praias</h2>
+        <dl className="beaches">
+          {beaches.map((b) => (
+            <div key={b.name}><dt>{b.name}</dt><dd>{b.text}</dd></div>
+          ))}
+        </dl>
+      </section>
+
+      <section className="map-section" id="mapa">
+        <div className="shell">
+          <div className="section-head">
+            <h2>Mapa</h2>
+            <p>A casa fica na Praia dos Nativos. O ponto no mapa marca a praia; o endereço exato é enviado após a reserva.</p>
+          </div>
+          <div className="map-frame">
+            <iframe
+              title="Praia dos Nativos no Google Maps"
+              src={MAPS_EMBED}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+          <a className="text-link" href={MAPS_LINK} target="_blank" rel="noreferrer">Abrir no Google Maps</a>
+        </div>
+      </section>
+
+      <section className="shell proximity-section">
+        <div className="section-head">
+          <h2>Da casa até o mar</h2>
+          <p>Vinte metros separam a entrada da casa da areia. No caminho, o jardim e o mangue que cercam o terreno.</p>
+        </div>
+        <ProximityDiagram />
+      </section>
+
+      <section className="shell distance-section">
+        <h2>Distâncias a partir da casa</h2>
+        <table className="distances">
+          <tbody>
+            {distances.map((d) => (
+              <tr key={d.place}><th scope="row">{d.place}</th><td>{d.value}</td><td>{d.how}</td></tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="muted">Valores aproximados.</p>
+      </section>
+
+      <section className="shell arrival-section">
+        <div className="arrival-grid">
+          <div>
+            <h2>Como chegar</h2>
+            <p>O aeroporto mais próximo é o de Porto Seguro. De lá, o caminho mais curto é a balsa para Arraial d'Ajuda, travessia de 10 minutos, e mais 25 km de estrada asfaltada até Trancoso. O trajeto leva cerca de uma hora. Por terra, pela BR-367 via Eunápolis, leva perto de duas horas e meia.</p>
+          </div>
+          <div>
+            <h2>Quando ir</h2>
+            <p>Quente o ano todo, entre 24 e 30 °C. A alta temporada vai de dezembro a março e no réveillon a vila fica cheia. De abril a junho e de agosto a novembro o movimento é menor e o mar costuma estar calmo.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="booking">
+        <div className="shell booking-grid">
+          <div>
+            <h2>Datas e valores</h2>
+            <p>Envie as datas e o número de hóspedes pelo WhatsApp. Respondemos com a disponibilidade e o valor da diária.</p>
+          </div>
+          <div className="booking-actions">
+            <WhatsAppButton className="button-large" />
+            <Link className="button button-ghost" to="/#casa">Ver a casa</Link>
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+/* ---------- app ---------- */
+
+function App() {
+  const path = usePath()
+  useEffect(() => {
+    if (window.location.hash) requestAnimationFrame(() => scrollToHash(window.location.hash))
+  }, [])
+  return (
+    <>
+      <a className="skip-link" href="#conteudo">Ir para o conteúdo</a>
+      <Header path={path} />
+      <main id="conteudo">{path === '/trancoso' ? <Trancoso /> : <Home />}</main>
+      <Footer />
+      <FloatingWhatsApp />
+    </>
   )
 }
 

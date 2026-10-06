@@ -1,6 +1,6 @@
 # Villa das Flores
 
-Landing page da Villa das Flores, hospedagem em Trancoso, construída com React + Vite.
+Site da Villa das Flores, casa de pé na areia na Praia dos Nativos, Trancoso (BA). React + Vite, sem backend.
 
 ## Desenvolvimento
 
@@ -9,10 +9,17 @@ npm install
 npm run dev
 ```
 
+## Estrutura
+
+- `src/content.js`: textos, links (WhatsApp, Airbnb, Instagram, Maps), descrição da casa e distâncias. Edite aqui para mudar conteúdo.
+- `src/main.jsx`: páginas `/` (casa) e `/trancoso` (vila, mapa, distâncias), roteador mínimo via History API.
+- `src/ProximityDiagram.jsx`: corte esquemático casa, jardim/mangue, praia e mar com a cota de 20 m.
+- `public/_redirects`: fallback de SPA para a rota `/trancoso` no Cloudflare Pages.
+
 ## Cloudflare Pages
 
 - Framework preset: `Vite`
 - Build command: `npm run build`
 - Build output directory: `dist`
 
-As fotos atuais usam as URLs públicas do anúncio no Airbnb. Para ter controle total dos ativos em produção, substitua as URLs em `src/main.jsx` por imagens próprias hospedadas no projeto ou em um CDN.
+As fotos usam as URLs públicas do anúncio no Airbnb. Para controle total em produção, substitua as URLs em `src/content.js` por imagens próprias.
